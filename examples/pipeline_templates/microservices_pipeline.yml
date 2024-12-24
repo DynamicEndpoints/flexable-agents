@@ -1,0 +1,256 @@
+trigger:
+  - main
+
+variables:
+  - group: azure-config
+  - name: vmImageName
+    value: 'ubuntu-latest'
+
+stages:
+- stage: Security
+  displayName: Security Checks
+  jobs:
+  - job: SecurityScan
+    displayName: Run Security Scans
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Install security tools
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s v0.18.3
+          curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh
+          
+          # Scan container images
+          trivy image $(containerRegistry)/$(imageRepository):$(tag)
+          
+          # Scan infrastructure code
+          trivy config ./infrastructure
+          
+          # Scan source code
+          gosec ./...
+          
+    - task: PublishSecurityAnalysisLogs@2
+      inputs:
+        ArtifactName: 'CodeAnalysisLogs'
+        ArtifactType: 'Container'
+
+- stage: Build
+  displayName: Build Services
+  jobs:
+  - job: BuildServices
+    displayName: Build and Push Services
+    pool:
+      vmImage: $(vmImageName)
+    strategy:
+      matrix:
+        api:
+          servicePath: 'services/api'
+          dockerfilePath: 'services/api/Dockerfile'
+          imageRepository: 'api'
+        auth:
+          servicePath: 'services/auth'
+          dockerfilePath: 'services/auth/Dockerfile'
+          imageRepository: 'auth'
+        frontend:
+          servicePath: 'services/frontend'
+          dockerfilePath: 'services/frontend/Dockerfile'
+          imageRepository: 'frontend'
+    steps:
+    - task: Docker@2
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: '$(imageRepository)'
+        command: 'buildAndPush'
+        Dockerfile: '$(dockerfilePath)'
+        buildContext: '$(Build.SourcesDirectory)'
+        tags: |
+          $(Build.BuildId)
+          latest
+        
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Update Kubernetes manifests with new image tags
+          sed -i 's|image: $(containerRegistry)/$(imageRepository):.*|image: $(containerRegistry)/$(imageRepository):$(Build.BuildId)|' kubernetes/$(imageRepository)/deployment.yaml
+
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: 'kubernetes/$(imageRepository)'
+        artifact: '$(imageRepository)-manifests'
+        publishLocation: 'pipeline'
+
+- stage: Test
+  displayName: Test Services
+  dependsOn: Build
+  jobs:
+  - job: IntegrationTests
+    displayName: Run Integration Tests
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: KubectlInstaller@0
+    
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Setup test environment
+          kubectl create namespace test-$(Build.BuildId)
+          
+          # Deploy services to test namespace
+          for service in api auth frontend; do
+            kubectl apply -f kubernetes/$service/deployment.yaml -n test-$(Build.BuildId)
+            kubectl apply -f kubernetes/$service/service.yaml -n test-$(Build.BuildId)
+          done
+          
+          # Run integration tests
+          cd tests/integration
+          npm install
+          npm test
+          
+          # Cleanup
+          kubectl delete namespace test-$(Build.BuildId)
+
+- stage: Deploy
+  displayName: Deploy to Production
+  dependsOn: 
+  - Security
+  - Test
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy to AKS
+    environment: 'production'
+    pool:
+      vmImage: $(vmImageName)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              buildType: 'current'
+              artifactName: '$(imageRepository)-manifests'
+              targetPath: '$(Pipeline.Workspace)/manifests'
+          
+          - task: KubernetesManifest@0
+            inputs:
+              action: 'deploy'
+              kubernetesServiceConnection: 'production-aks'
+              namespace: 'production'
+              manifests: |
+                $(Pipeline.Workspace)/manifests/deployment.yaml
+                $(Pipeline.Workspace)/manifests/service.yaml
+              containers: |
+                $(containerRegistry)/$(imageRepository):$(Build.BuildId)
+          
+          - task: Bash@3
+            inputs:
+              targetType: 'inline'
+              script: |
+                # Verify deployment
+                kubectl rollout status deployment/$(imageRepository) -n production
+                
+                # Run smoke tests
+                ./scripts/smoke-tests.sh production
+
+- stage: Monitor
+  displayName: Setup Monitoring
+  dependsOn: Deploy
+  jobs:
+  - job: ConfigureMonitoring
+    displayName: Configure Monitoring
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # Configure Log Analytics
+          az monitor log-analytics workspace create \
+            --resource-group $(resourceGroupName) \
+            --workspace-name $(clusterName)-logs
+          
+          # Enable container insights
+          az aks enable-addons \
+            --resource-group $(resourceGroupName) \
+            --name $(clusterName) \
+            --addons monitoring
+          
+          # Setup alerts
+          az monitor metrics alert create \
+            --name "High Pod CPU" \
+            --resource-group $(resourceGroupName) \
+            --scopes $(clusterResourceId) \
+            --condition "avg Percentage CPU > 80" \
+            --window-size 5m \
+            --evaluation-frequency 1m
+          
+          # Configure diagnostic settings
+          az monitor diagnostic-settings create \
+            --resource $(clusterResourceId) \
+            --workspace $(logAnalyticsWorkspaceId) \
+            --logs "[{\"category\":\"kube-apiserver\",\"enabled\":true},{\"category\":\"kube-controller-manager\",\"enabled\":true}]" \
+            --metrics "[{\"category\":\"AllMetrics\",\"enabled\":true}]"
+
+- stage: Backup
+  displayName: Configure Backup & DR
+  dependsOn: Monitor
+  jobs:
+  - job: ConfigureBackup
+    displayName: Setup Backup and DR
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # Create Recovery Services vault
+          az backup vault create \
+            --name $(clusterName)-vault \
+            --resource-group $(resourceGroupName) \
+            --location $(location)
+          
+          # Configure backup policy
+          az backup protection enable-for-vm \
+            --resource-group $(resourceGroupName) \
+            --vault-name $(clusterName)-vault \
+            --vm $(vmName) \
+            --policy-name "DefaultPolicy"
+          
+          # Setup geo-replication for ACR
+          az acr replication create \
+            --registry $(acrName) \
+            --location $(secondaryLocation)
+          
+          # Configure Traffic Manager
+          az network traffic-manager profile create \
+            --name $(appName)-tm \
+            --resource-group $(resourceGroupName) \
+            --routing-method Performance \
+            --unique-dns-name $(appName)-tm
+          
+          # Add endpoints
+          az network traffic-manager endpoint create \
+            --name primary \
+            --profile-name $(appName)-tm \
+            --resource-group $(resourceGroupName) \
+            --type azureEndpoints \
+            --target-resource-id $(primaryEndpointId)
+          
+          az network traffic-manager endpoint create \
+            --name secondary \
+            --profile-name $(appName)-tm \
+            --resource-group $(resourceGroupName) \
+            --type azureEndpoints \
+            --target-resource-id $(secondaryEndpointId)
