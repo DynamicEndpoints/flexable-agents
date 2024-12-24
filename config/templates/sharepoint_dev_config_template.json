@@ -1,0 +1,166 @@
+{
+    "sharepoint": {
+        "development": {
+            "solution_paths": {
+                "webparts": "src/webparts",
+                "extensions": "src/extensions",
+                "spfx": "src/spfx"
+            },
+            "deployment": {
+                "cdn_enabled": true,
+                "cdn_path": "assets",
+                "tenant_deploy_enabled": true
+            },
+            "environments": {
+                "dev": {
+                    "site_url": "https://contoso.sharepoint.com/sites/dev",
+                    "is_default": true
+                },
+                "qa": {
+                    "site_url": "https://contoso.sharepoint.com/sites/qa"
+                },
+                "prod": {
+                    "site_url": "https://contoso.sharepoint.com/sites/prod"
+                }
+            }
+        },
+        "information_architecture": {
+            "content_types": {
+                "hub_url": "https://contoso.sharepoint.com/sites/contenttype-hub",
+                "publishing_enabled": true
+            },
+            "taxonomy": {
+                "term_store_admin": "admin@contoso.com",
+                "managed_metadata_service": "Managed Metadata Service"
+            },
+            "retention": {
+                "policy_center": "https://contoso.sharepoint.com/sites/records",
+                "default_retention_period": "7years"
+            }
+        }
+    },
+    "power_platform": {
+        "environments": {
+            "dev": {
+                "url": "https://org.crm.dynamics.com/dev",
+                "is_default": true
+            },
+            "prod": {
+                "url": "https://org.crm.dynamics.com/prod"
+            }
+        },
+        "power_apps": {
+            "templates_path": "templates/power_apps",
+            "solution_publisher": "Contoso",
+            "solution_prefix": "con",
+            "deployment": {
+                "auto_publish": true,
+                "import_order": ["common", "core", "custom"]
+            }
+        },
+        "power_automate": {
+            "templates_path": "templates/flows",
+            "connection_references": {
+                "sharepoint": {
+                    "name": "shared_sharepoint",
+                    "type": "shared_sharepoint"
+                },
+                "teams": {
+                    "name": "shared_teams",
+                    "type": "shared_teams"
+                }
+            }
+        }
+    },
+    "migration": {
+        "tools": {
+            "sharegate": {
+                "path": "C:/Program Files/ShareGate/ShareGate.exe",
+                "license_key": "your_license_key",
+                "settings": {
+                    "copy_permissions": true,
+                    "copy_content": true,
+                    "preserve_timestamps": true,
+                    "migrate_workflows": false
+                }
+            },
+            "metalogix": {
+                "path": "C:/Program Files/Metalogix/Content Matrix Console/",
+                "settings": {
+                    "preserve_versions": true,
+                    "preserve_permissions": true,
+                    "migrate_workflows": false
+                }
+            }
+        },
+        "source_environments": {
+            "on_premises": {
+                "url": "http://sharepoint.contoso.local",
+                "version": "2019",
+                "authentication": "windows"
+            }
+        },
+        "target_environments": {
+            "sharepoint_online": {
+                "url": "https://contoso.sharepoint.com",
+                "authentication": "modern"
+            }
+        },
+        "batch_settings": {
+            "max_concurrent_migrations": 5,
+            "items_per_batch": 1000,
+            "retry_count": 3,
+            "retry_interval": 300
+        }
+    },
+    "development": {
+        "tools": {
+            "node_version": "16.x",
+            "npm_version": "8.x",
+            "gulp_version": "4.x",
+            "yeoman_version": "4.x"
+        },
+        "spfx": {
+            "version": "1.15.0",
+            "components": {
+                "web_parts": true,
+                "extensions": true,
+                "library_components": true
+            }
+        },
+        "vscode": {
+            "extensions": [
+                "ms-vscode.powershell",
+                "sharepointpnp.sharepoint-spfx-extensions"
+            ],
+            "settings": {
+                "files.exclude": {
+                    "**/.git": true,
+                    "**/.DS_Store": true,
+                    "**/node_modules": true,
+                    "**/lib": true
+                }
+            }
+        }
+    },
+    "logging": {
+        "level": "INFO",
+        "file_path": "logs/sharepoint_dev.log",
+        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    },
+    "security": {
+        "allowed_domains": [
+            "contoso.com",
+            "contoso.onmicrosoft.com"
+        ],
+        "approved_third_party_solutions": [
+            "pnp-modern-search",
+            "pnp-controls-react"
+        ],
+        "code_scanning": {
+            "enabled": true,
+            "tools": ["eslint", "sonarqube"],
+            "fail_on_issues": true
+        }
+    }
+}
