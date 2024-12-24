@@ -1,0 +1,110 @@
+{
+    "tenant_id": "your_tenant_id",
+    "client_id": "your_client_id",
+    "client_secret": "your_client_secret",
+    "scopes": [
+        "https://graph.microsoft.com/.default"
+    ],
+    "environment": {
+        "name": "production",
+        "region": "us",
+        "cloud": "commercial"
+    },
+    "logging": {
+        "level": "INFO",
+        "file_path": "logs/m365_admin.log",
+        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    },
+    "retry_policy": {
+        "max_retries": 3,
+        "retry_delay": 1,
+        "exponential_backoff": true
+    },
+    "cache": {
+        "enabled": true,
+        "ttl_seconds": 300,
+        "max_size_mb": 100
+    },
+    "agents": {
+        "m365_admin": {
+            "work_dir": "work_files/m365",
+            "capabilities": [
+                "user_management",
+                "license_management",
+                "group_management",
+                "device_management",
+                "security_management"
+            ]
+        },
+        "intune": {
+            "work_dir": "work_files/intune",
+            "capabilities": [
+                "device_management",
+                "policy_management",
+                "app_management",
+                "compliance_management"
+            ]
+        },
+        "exchange": {
+            "work_dir": "work_files/exchange",
+            "capabilities": [
+                "mailbox_management",
+                "calendar_management",
+                "distribution_group_management",
+                "mail_flow_management"
+            ]
+        },
+        "teams": {
+            "work_dir": "work_files/teams",
+            "capabilities": [
+                "team_management",
+                "channel_management",
+                "meeting_management",
+                "policy_management"
+            ]
+        },
+        "bookings": {
+            "work_dir": "work_files/bookings",
+            "capabilities": [
+                "business_management",
+                "staff_management",
+                "service_management",
+                "appointment_management"
+            ]
+        }
+    },
+    "workflows": {
+        "employee_onboarding": {
+            "enabled": true,
+            "default_licenses": [
+                "M365_E3",
+                "POWER_BI_PRO"
+            ],
+            "default_groups": [
+                "all-employees",
+                "company-announcements"
+            ],
+            "welcome_email_template": "templates/welcome_email.html",
+            "teams_template": "templates/new_employee_team.json"
+        },
+        "employee_offboarding": {
+            "enabled": true,
+            "data_retention_days": 90,
+            "manager_notification_template": "templates/offboarding_notification.html",
+            "exit_survey_form": "templates/exit_survey.json"
+        },
+        "security_compliance": {
+            "enabled": true,
+            "scan_interval_hours": 24,
+            "alert_thresholds": {
+                "suspicious_signin": 5,
+                "failed_mfa": 3,
+                "data_exfiltration": 1000
+            },
+            "report_recipients": [
+                "security@company.com",
+                "compliance@company.com"
+            ]
+        }
+    }
+}

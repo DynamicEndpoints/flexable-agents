@@ -1,0 +1,104 @@
+{
+    "name": "security_audit",
+    "description": "Comprehensive security audit workflow",
+    "schedule": {
+        "frequency": "daily",
+        "time": "00:00",
+        "timezone": "UTC"
+    },
+    "components": {
+        "user_audit": {
+            "enabled": true,
+            "checks": [
+                "inactive_accounts",
+                "admin_accounts",
+                "mfa_status",
+                "password_policies",
+                "sign_in_logs"
+            ],
+            "thresholds": {
+                "inactive_days": 30,
+                "failed_sign_ins": 5,
+                "password_age_days": 90
+            }
+        },
+        "device_audit": {
+            "enabled": true,
+            "checks": [
+                "compliance_status",
+                "encryption_status",
+                "update_status",
+                "antivirus_status"
+            ],
+            "thresholds": {
+                "os_version_age_days": 180,
+                "antivirus_definition_age_days": 7
+            }
+        },
+        "data_audit": {
+            "enabled": true,
+            "checks": [
+                "sensitive_data_access",
+                "external_sharing",
+                "dlp_violations",
+                "retention_policies"
+            ],
+            "scan_locations": [
+                "sharepoint",
+                "onedrive",
+                "teams",
+                "exchange"
+            ]
+        }
+    },
+    "notifications": {
+        "email": {
+            "enabled": true,
+            "recipients": [
+                "security@company.com"
+            ],
+            "severity_levels": [
+                "critical",
+                "high",
+                "medium"
+            ]
+        },
+        "teams": {
+            "enabled": true,
+            "channel_webhook": "https://webhook.url",
+            "severity_levels": [
+                "critical",
+                "high"
+            ]
+        }
+    },
+    "reporting": {
+        "format": "pdf",
+        "retention_days": 365,
+        "storage_location": "audit_reports/security",
+        "include_metrics": true,
+        "include_trends": true,
+        "include_recommendations": true
+    },
+    "remediation": {
+        "auto_remediate": {
+            "enabled": true,
+            "actions": [
+                "disable_inactive_accounts",
+                "enforce_mfa",
+                "revoke_suspicious_sessions"
+            ]
+        },
+        "approval_required": {
+            "enabled": true,
+            "actions": [
+                "remove_admin_privileges",
+                "block_device",
+                "quarantine_data"
+            ],
+            "approvers": [
+                "security.admin@company.com"
+            ]
+        }
+    }
+}

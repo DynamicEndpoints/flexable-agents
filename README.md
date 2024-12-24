@@ -935,10 +935,11 @@ async def enhanced_customer_service(
     # Generate creative response if positive sentiment
     if cs_result.output["sentiment"]["compound"] > 0.5:
         creative_result = await creative_agent.process_task(Task(
-            task_type="generate_content",
+            task_id="creative_response",
+            task_type="generate_poetry",
             input_data={
-                "context": cs_result.output["response"],
-                "style": "appreciative"
+                "theme": "customer_appreciation",
+                "context": cs_result.output["response"]
             }
         ))
         results["creative_response"] = creative_result.output
@@ -1135,4 +1136,154 @@ async def sensitive_operation():
 
 ## 📝 License
 
-MIT License - see [LICENSE](LICENSE) for details
+MIT License - see LICENSE file for details
+
+## Specialized Workflows
+
+### 1. Employee Offboarding
+Located in `examples/employee_offboarding_workflow.py`, this workflow automates the complete employee offboarding process:
+- Disables user account and sets out-of-office message
+- Removes licenses
+- Sets up email forwarding to manager
+- Removes from groups and teams
+- Wipes company devices
+- Archives data
+- Generates comprehensive offboarding report
+
+### 2. Security Audit
+Located in `examples/security_audit_workflow.py`, this workflow performs comprehensive security audits:
+- User audit (inactive accounts, MFA status, admin accounts)
+- Device audit (compliance, encryption, updates)
+- Data audit (external sharing, DLP violations)
+- Automated remediation based on findings
+- Configurable notifications and reporting
+
+### 3. Compliance Monitoring
+Located in `examples/compliance_monitoring_workflow.py`, this workflow ensures continuous compliance:
+- Data classification and sensitivity scanning
+- Policy compliance monitoring
+- Access reviews (privileged roles, guest access)
+- Automated remediation actions
+- Compliance reporting and alerts
+
+## Configuration Templates
+
+### 1. M365 Configuration
+Located in `config/templates/m365_config_template.json`:
+- Authentication settings
+- Environment configuration
+- Logging preferences
+- Agent-specific settings
+- Workflow configurations
+
+### 2. Workflow Templates
+Located in `config/templates/workflow_templates/`:
+
+#### Security Audit Workflow
+- Audit components and checks
+- Thresholds and severity levels
+- Notification settings
+- Remediation actions
+- Reporting preferences
+
+#### Compliance Workflow
+- Data classification settings
+- Policy compliance rules
+- Access review scope
+- Alert configuration
+- Automation settings
+
+## Agents
+
+### 1. M365 Admin Agent
+Core agent for Microsoft 365 administration:
+- User management
+- License management
+- Group management
+- Security management
+- Reporting capabilities
+
+### 2. Intune Agent
+Device management specialist:
+- Device compliance
+- Policy management
+- App management
+- Configuration profiles
+
+### 3. Exchange Agent
+Email and calendar management:
+- Mailbox configuration
+- Calendar management
+- Distribution groups
+- Mail flow rules
+
+### 4. Teams Agent
+Teams workspace management:
+- Team/channel management
+- Meeting policies
+- App management
+- Security settings
+
+### 5. Bookings Agent
+Appointment and service management:
+- Business management
+- Staff management
+- Service configuration
+- Appointment handling
+- Customer management
+
+## Getting Started
+
+1. Copy the appropriate configuration template:
+```bash
+cp config/templates/m365_config_template.json config/m365_config.json
+```
+
+2. Update the configuration with your credentials:
+- Tenant ID
+- Client ID
+- Client Secret
+- Environment settings
+
+3. Choose a workflow to run:
+```python
+# Employee offboarding
+python examples/employee_offboarding_workflow.py
+
+# Security audit
+python examples/security_audit_workflow.py
+
+# Compliance monitoring
+python examples/compliance_monitoring_workflow.py
+```
+
+## Best Practices
+
+1. Security:
+- Store credentials securely
+- Use least-privilege access
+- Enable audit logging
+- Regular security reviews
+
+2. Compliance:
+- Regular compliance scans
+- Document all changes
+- Maintain audit trails
+- Review access regularly
+
+3. Automation:
+- Test workflows in staging
+- Monitor automated actions
+- Set up alerts for failures
+- Regular backup checks
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details

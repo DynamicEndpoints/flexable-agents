@@ -1,0 +1,138 @@
+{
+    "name": "compliance_monitoring",
+    "description": "Continuous compliance monitoring and enforcement",
+    "schedule": {
+        "frequency": "hourly",
+        "interval": 1,
+        "timezone": "UTC"
+    },
+    "components": {
+        "data_classification": {
+            "enabled": true,
+            "scan_types": [
+                "pii",
+                "financial",
+                "health",
+                "intellectual_property"
+            ],
+            "locations": [
+                "sharepoint",
+                "onedrive",
+                "teams",
+                "exchange"
+            ],
+            "sensitivity_labels": [
+                "public",
+                "internal",
+                "confidential",
+                "highly_confidential"
+            ]
+        },
+        "policy_compliance": {
+            "enabled": true,
+            "policies": [
+                "data_retention",
+                "information_protection",
+                "device_compliance",
+                "communication_compliance"
+            ],
+            "enforcement_actions": [
+                "block_access",
+                "quarantine",
+                "notify_admin",
+                "require_encryption"
+            ]
+        },
+        "access_reviews": {
+            "enabled": true,
+            "scope": [
+                "privileged_roles",
+                "guest_access",
+                "team_memberships",
+                "application_permissions"
+            ],
+            "frequency": "weekly",
+            "reviewers": [
+                "compliance.admin@company.com",
+                "security.admin@company.com"
+            ]
+        }
+    },
+    "reporting": {
+        "format": "excel",
+        "schedule": "daily",
+        "recipients": [
+            "compliance@company.com"
+        ],
+        "metrics": [
+            "policy_violations",
+            "remediation_actions",
+            "access_reviews",
+            "sensitivity_labels"
+        ],
+        "retention": {
+            "period_days": 365,
+            "storage_location": "compliance_reports"
+        }
+    },
+    "alerts": {
+        "email": {
+            "enabled": true,
+            "recipients": [
+                "compliance.alerts@company.com"
+            ],
+            "severity_levels": [
+                "critical",
+                "high",
+                "medium",
+                "low"
+            ]
+        },
+        "teams": {
+            "enabled": true,
+            "channel_webhook": "https://webhook.url",
+            "severity_levels": [
+                "critical",
+                "high"
+            ]
+        }
+    },
+    "automation": {
+        "remediation": {
+            "enabled": true,
+            "actions": {
+                "quarantine_sensitive_data": {
+                    "enabled": true,
+                    "threshold": "highly_confidential"
+                },
+                "revoke_guest_access": {
+                    "enabled": true,
+                    "conditions": [
+                        "expired_review",
+                        "policy_violation"
+                    ]
+                },
+                "enforce_encryption": {
+                    "enabled": true,
+                    "sensitivity_levels": [
+                        "confidential",
+                        "highly_confidential"
+                    ]
+                }
+            }
+        },
+        "reporting": {
+            "enabled": true,
+            "actions": {
+                "generate_audit_logs": {
+                    "enabled": true,
+                    "frequency": "daily"
+                },
+                "export_compliance_metrics": {
+                    "enabled": true,
+                    "frequency": "weekly"
+                }
+            }
+        }
+    }
+}
