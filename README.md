@@ -733,3 +733,406 @@ The WorkflowManager provides a structured way to:
 - Monitor execution
 - Manage resources
 - Scale the system
+
+# 🤖 Flexible Agents System
+
+A comprehensive, AI-powered multi-agent system built with Claude 3, featuring intelligent agents for customer service, content creation, data processing, and more. This system demonstrates advanced agent collaboration and task processing capabilities.
+
+## 🌟 System Overview
+
+### Core Components
+
+1. **Agent System**
+   - Task distribution
+   - Message routing
+   - Resource management
+   - Error handling
+   - Performance monitoring
+
+2. **Base Agent**
+   - Async task processing
+   - Message handling
+   - Tool integration
+   - State management
+   - Error recovery
+
+## 🎯 Available Agents
+
+### 1. 🎭 EnhancedCustomerServiceAgent
+Advanced customer service handling with multi-language support and sentiment analysis.
+
+**Capabilities:**
+- Multi-language support (10+ languages)
+- Real-time sentiment analysis
+- Automated follow-ups
+- Knowledge base integration
+- Satisfaction surveys
+- Escalation management
+
+**Example Usage:**
+```python
+cs_agent = EnhancedCustomerServiceAgent(
+    agent_id="cs_1",
+    work_dir="work_files/cs",
+    api_keys={"anthropic": "your_key"}
+)
+
+# Handle customer inquiry
+result = await cs_agent.process_task(Task(
+    task_type="customer_inquiry",
+    input_data="What's my order status?",
+    parameters={"order_id": "O123"}
+))
+```
+
+### 2. 📝 CreativeAgent
+Content generation and creative writing with visual capabilities.
+
+**Capabilities:**
+- Story generation
+- Poetry creation
+- Character development
+- Scene description
+- Metaphor generation
+- Image-based content
+
+**Example Usage:**
+```python
+creative_agent = CreativeAgent(
+    agent_id="creative_1",
+    work_dir="work_files/creative",
+    api_keys={"anthropic": "your_key"}
+)
+
+# Generate story from image
+story = await creative_agent.process_task(Task(
+    task_type="generate_story",
+    input_data={
+        "image_url": "path/to/image.jpg",
+        "style": "fantasy"
+    }
+))
+```
+
+### 3. 🖼️ ImageAgent
+Image processing and analysis capabilities.
+
+**Capabilities:**
+- Image analysis
+- Visual content generation
+- Object detection
+- Scene understanding
+- Style transfer
+- Image comparison
+
+**Example Usage:**
+```python
+image_agent = ImageAgent(
+    agent_id="image_1",
+    work_dir="work_files/image",
+    api_keys={"anthropic": "your_key"}
+)
+
+# Analyze image
+analysis = await image_agent.process_task(Task(
+    task_type="analyze_image",
+    input_data={"image_url": "path/to/image.jpg"}
+))
+```
+
+### 4. 🔄 TranslationAgent
+Advanced language translation and localization.
+
+**Capabilities:**
+- Multi-language translation
+- Context preservation
+- Style adaptation
+- Idiom handling
+- Cultural adaptation
+- Quality assurance
+
+**Example Usage:**
+```python
+trans_agent = TranslationAgent(
+    agent_id="trans_1",
+    work_dir="work_files/translation",
+    api_keys={"anthropic": "your_key"}
+)
+
+# Translate text
+translation = await trans_agent.process_task(Task(
+    task_type="translate",
+    input_data={
+        "text": "Hello, world!",
+        "target_language": "es"
+    }
+))
+```
+
+### 5. 📊 DataProcessor
+Data analysis and transformation capabilities.
+
+**Capabilities:**
+- Data cleaning
+- Format conversion
+- Statistical analysis
+- Pattern recognition
+- Data visualization
+- Anomaly detection
+
+**Example Usage:**
+```python
+data_agent = DataProcessor(
+    agent_id="data_1",
+    work_dir="work_files/data",
+    api_keys={"anthropic": "your_key"}
+)
+
+# Process dataset
+result = await data_agent.process_task(Task(
+    task_type="analyze_data",
+    input_data={
+        "file_path": "data.csv",
+        "analysis_type": "statistical"
+    }
+))
+```
+
+## 🤝 Agent Collaboration
+
+### 1. Customer Service Enhancement
+```python
+async def enhanced_customer_service(
+    system: AgentSystem,
+    inquiry: str,
+    image_url: str = None
+) -> Dict[str, Any]:
+    """Handle customer inquiry with multiple agents"""
+    
+    # Initialize agents
+    cs_agent = system.get_agent("customer_service")
+    creative_agent = system.get_agent("creative")
+    image_agent = system.get_agent("image")
+    
+    results = {}
+    
+    # Process image if provided
+    if image_url:
+        image_analysis = await image_agent.process_task(Task(
+            task_type="analyze_image",
+            input_data={"image_url": image_url}
+        ))
+        results["image_analysis"] = image_analysis.output
+    
+    # Handle customer inquiry
+    cs_result = await cs_agent.process_task(Task(
+        task_type="customer_inquiry",
+        input_data=inquiry,
+        parameters={"image_context": results.get("image_analysis")}
+    ))
+    results["cs_response"] = cs_result.output
+    
+    # Generate creative response if positive sentiment
+    if cs_result.output["sentiment"]["compound"] > 0.5:
+        creative_result = await creative_agent.process_task(Task(
+            task_type="generate_content",
+            input_data={
+                "context": cs_result.output["response"],
+                "style": "appreciative"
+            }
+        ))
+        results["creative_response"] = creative_result.output
+    
+    return results
+```
+
+### 2. Multi-language Content Creation
+```python
+async def create_multilingual_content(
+    system: AgentSystem,
+    content_request: Dict[str, Any]
+) -> Dict[str, Any]:
+    """Create content in multiple languages"""
+    
+    # Initialize agents
+    creative_agent = system.get_agent("creative")
+    trans_agent = system.get_agent("translation")
+    
+    # Generate base content
+    content = await creative_agent.process_task(Task(
+        task_type="generate_content",
+        input_data=content_request
+    ))
+    
+    # Translate to target languages
+    translations = {}
+    for lang in content_request["target_languages"]:
+        trans_result = await trans_agent.process_task(Task(
+            task_type="translate",
+            input_data={
+                "text": content.output["content"],
+                "target_language": lang
+            }
+        ))
+        translations[lang] = trans_result.output
+    
+    return {
+        "original": content.output,
+        "translations": translations
+    }
+```
+
+## 🔄 Workflow Examples
+
+### 1. Customer Support Workflow
+```python
+# Initialize system
+system = AgentSystem()
+
+# Register agents
+system.register_agent(EnhancedCustomerServiceAgent(...))
+system.register_agent(CreativeAgent(...))
+system.register_agent(ImageAgent(...))
+
+# Create workflow
+workflow = CustomerSupportWorkflow(system)
+
+# Process customer inquiry
+result = await workflow.process_inquiry(
+    text="My product is damaged",
+    image="damage.jpg"
+)
+```
+
+### 2. Content Creation Workflow
+```python
+# Initialize system
+system = AgentSystem()
+
+# Register agents
+system.register_agent(CreativeAgent(...))
+system.register_agent(ImageAgent(...))
+system.register_agent(TranslationAgent(...))
+
+# Create workflow
+workflow = ContentCreationWorkflow(system)
+
+# Generate multi-language content
+content = await workflow.create_content(
+    type="blog_post",
+    topic="AI Trends",
+    languages=["en", "es", "fr"]
+)
+```
+
+## 📊 Performance Monitoring
+
+```python
+# Get agent statistics
+stats = await system.get_statistics()
+
+# Monitor specific agent
+agent_stats = await cs_agent.get_performance_metrics()
+
+# Generate system report
+report = await system.generate_report()
+```
+
+## 🛠️ Advanced Configuration
+
+### 1. Custom Knowledge Base
+```python
+knowledge_base = {
+    "products": [...],
+    "policies": [...],
+    "faqs": [...]
+}
+
+cs_agent = EnhancedCustomerServiceAgent(
+    knowledge_base=knowledge_base,
+    ...
+)
+```
+
+### 2. Custom Workflows
+```python
+class CustomWorkflow(BaseWorkflow):
+    async def process(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        # Custom workflow logic
+        pass
+```
+
+## 🔍 Error Handling
+
+```python
+try:
+    result = await agent.process_task(task)
+except AgentError as e:
+    # Handle agent-specific errors
+    logger.error(f"Agent error: {e}")
+except SystemError as e:
+    # Handle system-level errors
+    logger.error(f"System error: {e}")
+```
+
+## 📈 Scaling
+
+### 1. Horizontal Scaling
+```python
+# Create agent pool
+pool = AgentPool(
+    agent_class=EnhancedCustomerServiceAgent,
+    pool_size=5
+)
+
+# Process tasks
+results = await pool.process_batch(tasks)
+```
+
+### 2. Load Balancing
+```python
+# Create load balancer
+balancer = LoadBalancer(
+    strategy="round_robin",
+    agents=[agent1, agent2, agent3]
+)
+
+# Process task
+result = await balancer.process_task(task)
+```
+
+## 🔒 Security
+
+1. **API Key Management**
+```python
+from utils.security import KeyManager
+
+key_manager = KeyManager()
+api_keys = key_manager.get_keys()
+```
+
+2. **Access Control**
+```python
+@requires_permission("admin")
+async def sensitive_operation():
+    pass
+```
+
+## 📚 Resources
+
+- [Full Documentation](docs/README.md)
+- [API Reference](docs/api.md)
+- [Example Collection](examples/README.md)
+- [Contributing Guide](CONTRIBUTING.md)
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch
+3. Make changes
+4. Run tests
+5. Submit pull request
+
+## 📝 License
+
+MIT License - see [LICENSE](LICENSE) for details
