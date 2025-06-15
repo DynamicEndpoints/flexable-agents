@@ -22,7 +22,6 @@ seaborn>=0.13.0
 joblib>=1.4.0
 
 # Microsoft Graph and Azure dependencies
-microsoft-graph-core>=1.0.0
 msgraph-sdk>=1.13.0
 azure-identity>=1.19.0
 azure-mgmt-resource>=23.2.0
