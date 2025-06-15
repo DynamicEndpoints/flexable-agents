@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Project Documentation
+    url: https://github.com/flexible-agents/flexible-agents-mcp/blob/main/README.md # Adjust if you have dedicated docs
+    about: Please check the documentation for answers first.
+  - name: Security Vulnerability Report
+    url: https://github.com/flexible-agents/flexible-agents-mcp/security/policy
+    about: Please report security vulnerabilities here.

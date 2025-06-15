@@ -1,0 +1,123 @@
+name: "🤖 Copilot Task"
+description: "A specific task to be primarily addressed by GitHub Copilot or another AI coding agent."
+labels: ["copilot", "task", "needs-review"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This template is designed for tasks that will be primarily handled by AI coding agents like GitHub Copilot. 
+        Please be as specific and detailed as possible in your requirements.
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: "Goal"
+      description: "A clear, concise statement of what needs to be achieved"
+      placeholder: "Create a new MCP tool that..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: detailed-requirements
+    attributes:
+      label: "Detailed Requirements"
+      description: "Step-by-step breakdown of requirements. Be as specific as possible."
+      placeholder: |
+        1. Requirement 1: Modify the example_function in src/module/file.py
+           - Input: Takes a string input_text and an integer max_length
+           - Processing: Truncate input_text to max_length if it exceeds it
+           - Output: Returns the modified string
+           - Error Handling: If max_length is negative, raise ValueError
+        
+        2. Requirement 2: Add unit tests for example_function
+           - Test Case 1: Input "Hello World", 5. Expected: "Hello..."
+           - Test Case 2: Input "Short", 10. Expected: "Short"
+    validations:
+      required: true
+
+  - type: textarea
+    id: files-to-modify
+    attributes:
+      label: "Files to Modify"
+      description: "List all files that need to be created or modified"
+      placeholder: |
+        - src/module/file.py
+        - tests/test_file.py
+        - (Add other relevant files)
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "Context (Optional but Recommended)"
+      description: "Links to relevant code, documentation, or discussions"
+      placeholder: |
+        - Relevant Code Snippet(s):
+        ```python
+        def example_function(input_text: str) -> str:
+            # current implementation
+            return input_text
+        ```
+        - Related Issue(s): #123, #456
+        - Design Document/Notes: Link to relevant docs
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: "Acceptance Criteria"
+      description: "How will we know this task is complete and correct?"
+      placeholder: |
+        - [ ] All specified requirements are implemented
+        - [ ] Code is well-documented (docstrings, comments)
+        - [ ] New unit tests pass
+        - [ ] Existing unit tests pass
+        - [ ] Code adheres to project standards (Black, Pylint)
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: definition-of-done
+    attributes:
+      label: "Definition of Done (for Reviewer)"
+      description: "What the human reviewer should check"
+      placeholder: |
+        - [ ] Code changes reviewed and approved
+        - [ ] Functionality manually tested and meets requirements
+        - [ ] Copilot's work meets quality standards
+      render: markdown
+
+  - type: textarea
+    id: notes-for-copilot
+    attributes:
+      label: "Notes for Copilot (AI Agent)"
+      description: "Specific instructions for the AI agent"
+      placeholder: |
+        - Please ensure all new code includes type hints
+        - Follow existing coding patterns in the project
+        - If you encounter ambiguity, ask for clarification
+        - Focus on completing requirements as specified
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: "Task Complexity"
+      description: "How complex do you estimate this task to be?"
+      options:
+        - "Low - Simple changes, minimal testing"
+        - "Medium - Moderate changes, some new functionality"
+        - "High - Complex changes, extensive testing required"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "Priority"
+      description: "How urgent is this task?"
+      options:
+        - "Low - Nice to have"
+        - "Medium - Should be done soon"
+        - "High - Important for upcoming release"
+        - "Critical - Blocking other work"

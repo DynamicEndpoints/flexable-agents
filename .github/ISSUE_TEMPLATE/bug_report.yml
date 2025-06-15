@@ -1,0 +1,134 @@
+name: "🐞 Bug Report"
+description: "Report a reproducible bug or unexpected behavior."
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill out the sections below to help us diagnose and fix the issue.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: "A clear and concise description of what the bug is."
+      placeholder: "Describe the bug..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: "Steps to Reproduce"
+      description: "Please provide step-by-step instructions to reproduce the issue."
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: "Expected Behavior"
+      description: "A clear description of what you expected to happen."
+      placeholder: "What should have happened?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: "Actual Behavior"
+      description: "A clear description of what actually happened. Include screenshots or logs if applicable."
+      placeholder: "What actually happened?"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: "Flexible Agents MCP Version"
+      description: "What version of the MCP server are you running?"
+      placeholder: "v2.0.0, commit SHA, or 'latest'"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: "Python Version"
+      description: "What version of Python are you using?"
+      placeholder: "3.9.13"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: "Operating System"
+      description: "What operating system are you using?"
+      options:
+        - Windows 11
+        - Windows 10
+        - macOS
+        - Ubuntu
+        - Other Linux
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: config-settings
+    attributes:
+      label: "Relevant Configuration Settings"
+      description: "Please paste relevant sections from your config.json (mask sensitive data like API keys)"
+      placeholder: |
+        {
+          "server": {
+            "log_level": "INFO"
+          },
+          "m365": {
+            "tenant_id": "your-tenant-id"
+          }
+        }
+      render: json
+
+  - type: checkboxes
+    id: cloud-services
+    attributes:
+      label: "Cloud Services Involved"
+      description: "Select all cloud services involved in this issue"
+      options:
+        - label: "Microsoft 365 / Graph API"
+        - label: "Azure"
+        - label: "Anthropic Claude"
+        - label: "None"
+
+  - type: input
+    id: tools-involved
+    attributes:
+      label: "Tool(s) Involved"
+      description: "List any specific MCP tools involved in this issue"
+      placeholder: "M365_Calendar_List_Events, Azure_VM_List, etc."
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: "Additional Context"
+      description: "Add any other context about the problem here"
+      placeholder: |
+        - Recent changes to your setup
+        - Specific data that triggers the bug
+        - Network conditions (if relevant)
+        - Any other relevant information
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Logs"
+      description: "Please paste relevant server logs or console output here"
+      placeholder: "Paste logs here..."
+      render: text

@@ -1,0 +1,62 @@
+name: "🚀 Feature Request"
+description: "Suggest an idea or enhancement for this project."
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Please provide as much detail as possible to help us understand and implement your idea.
+
+  - type: textarea
+    id: problem-description
+    attributes:
+      label: "Is your feature request related to a problem?"
+      description: "A clear description of what the problem is"
+      placeholder: "I'm always frustrated when..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution-description
+    attributes:
+      label: "Describe the solution you'd like"
+      description: "A clear and concise description of what you want to happen"
+      placeholder: "I would like..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives-considered
+    attributes:
+      label: "Describe alternatives you've considered"
+      description: "Any alternative solutions or features you've considered"
+      placeholder: "Other approaches could be..."
+
+  - type: textarea
+    id: technical-specs
+    attributes:
+      label: "Technical Specifications (Optional)"
+      description: "If you have specific implementation details in mind"
+      placeholder: |
+        - Affected Module(s)/Component(s): src/tools/m365_tools.py
+        - Proposed Function Signature(s): async def new_tool_function(param1: str) -> dict:
+        - External Dependencies/APIs: New Microsoft Graph API endpoint
+        - Potential Impact: How this might affect other parts of the system
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: "Acceptance Criteria"
+      description: "How will we know when this feature is complete?"
+      placeholder: |
+        - [ ] Criterion 1: The new tool is available via MCP
+        - [ ] Criterion 2: The tool accepts required parameters
+        - [ ] Criterion 3: Unit tests cover the new functionality
+      render: markdown
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: "Additional Context"
+      description: "Add any other context or screenshots about the feature request"
+      placeholder: "Any additional information..."
