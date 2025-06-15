@@ -1,0 +1,30 @@
+{
+  "server": {
+    "name": "Flexible Agents MCP Server",
+    "version": "2.0.0",
+    "debug": false,
+    "log_level": "INFO",
+    "max_execution_history": 1000,
+    "timeout_seconds": 300
+  },
+  "m365": {
+    "tenant_id": "your-tenant-id-here",
+    "client_id": "your-client-id-here",
+    "client_secret": "your-client-secret-here",
+    "authority": "https://login.microsoftonline.com/your-tenant-id-here",
+    "scopes": [
+      "https://graph.microsoft.com/.default"
+    ]
+  },
+  "anthropic": {
+    "api_key": "your-anthropic-api-key-here",
+    "model": "claude-3-5-sonnet-20241022",
+    "max_tokens": 4096,
+    "temperature": 0.0
+  },
+  "azure": {
+    "subscription_id": "your-azure-subscription-id-here",
+    "resource_group": "your-resource-group-here",
+    "location": "eastus"
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "name": "flexible-agents-mcp",
+  "version": "2.0.0",
+  "description": "A comprehensive Microsoft 365 administration and automation platform with MCP server capabilities",
+  "author": "Flexible Agents Team",
+  "license": "MIT",
+  "homepage": "https://github.com/flexible-agents/flexible-agents-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flexible-agents/flexible-agents-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/flexible-agents/flexible-agents-mcp/issues"
+  },
+  "mcpServers": {
+    "flexible-agents": {
+      "command": "python",
+      "args": ["server.py"],
+      "description": "Flexible Agents MCP Server for Microsoft 365 Administration",
+      "capabilities": {
+        "tools": true,
+        "prompts": false,
+        "resources": false
+      },
+      "configuration": {
+        "required": [
+          "AZURE_TENANT_ID",
+          "AZURE_CLIENT_ID", 
+          "AZURE_CLIENT_SECRET",
+          "ANTHROPIC_API_KEY"
+        ],
+        "optional": [
+          "AZURE_SUBSCRIPTION_ID",
+          "AZURE_RESOURCE_GROUP",
+          "MCP_DEBUG",
+          "MCP_LOG_LEVEL"
+        ]
+      },
+      "tools": [
+        {
+          "name": "m365_user_management",
+          "description": "Manage Microsoft 365 users (create, update, disable, enable)"
+        },
+        {
+          "name": "m365_group_management", 
+          "description": "Manage Microsoft 365 groups and teams"
+        },
+        {
+          "name": "m365_license_management",
+          "description": "Manage user licenses and subscriptions"
+        },
+        {
+          "name": "teams_management",
+          "description": "Manage Microsoft Teams configurations and policies"
+        },
+        {
+          "name": "sharepoint_management",
+          "description": "Manage SharePoint sites and configurations"
+        },
+        {
+          "name": "exchange_management",
+          "description": "Manage Exchange Online mailboxes and settings"
+        },
+        {
+          "name": "intune_device_management",
+          "description": "Manage Intune device policies and compliance"
+        },
+        {
+          "name": "azure_resource_management",
+          "description": "Manage Azure cloud resources and infrastructure"
+        },
+        {
+          "name": "security_audit",
+          "description": "Perform security audits and compliance checks"
+        },
+        {
+          "name": "cost_analysis",
+          "description": "Analyze and optimize cloud costs"
+        },
+        {
+          "name": "document_processing",
+          "description": "Process and analyze documents (PDF, Word, etc.)"
+        },
+        {
+          "name": "data_analysis",
+          "description": "Analyze data and generate insights"
+        },
+        {
+          "name": "workflow_automation",
+          "description": "Create and execute automated workflows"
+        }
+      ],
+      "examples": [
+        {
+          "name": "Create new user",
+          "description": "Create a new Microsoft 365 user with default settings",
+          "tool": "m365_user_management",
+          "parameters": {
+            "action": "create",
+            "user_data": {
+              "displayName": "John Doe",
+              "userPrincipalName": "john.doe@company.com",
+              "mailNickname": "john.doe",
+              "accountEnabled": true,
+              "passwordProfile": {
+                "forceChangePasswordNextSignIn": true,
+                "password": "TempPassword123!"
+              }
+            }
+          }
+        },
+        {
+          "name": "Create Teams team",
+          "description": "Create a new Microsoft Teams team",
+          "tool": "teams_management",
+          "parameters": {
+            "action": "create_team",
+            "team_data": {
+              "displayName": "Project Alpha",
+              "description": "Team for Project Alpha collaboration",
+              "visibility": "Private"
+            }
+          }
+        },
+        {
+          "name": "Security audit",
+          "description": "Perform a comprehensive security audit",
+          "tool": "security_audit",
+          "parameters": {
+            "audit_type": "comprehensive",
+            "scope": ["users", "groups", "applications", "policies"]
+          }
+        }
+      ]
+    }
+  },
+  "keywords": [
+    "mcp",
+    "microsoft-365",
+    "azure",
+    "administration",
+    "automation",
+    "teams",
+    "sharepoint",
+    "exchange",
+    "intune",
+    "security",
+    "compliance"
+  ],
+  "categories": [
+    "productivity",
+    "administration",
+    "automation",
+    "security"
+  ]
+}

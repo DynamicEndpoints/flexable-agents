@@ -1,14 +1,34 @@
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional, Union, Callable
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import asyncio
 import logging
 from datetime import datetime
 import json
+import uuid
+from contextlib import asynccontextmanager
+import structlog
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Configure structured logging
+structlog.configure(
+    processors=[
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.processors.JSONRenderer()
+    ],
+    context_class=dict,
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=True,
+)
+
+logger = structlog.get_logger(__name__)
 
 @dataclass
 class Message:
@@ -167,3 +187,32 @@ class AgentSystem:
             sender_id, (recipient_id, message) = await self.message_bus.get()
             await self.route_message(sender_id, recipient_id, message)
             self.message_bus.task_done()
+
+# Import enhanced MCP-compatible classes
+try:
+    from .base_mcp import (
+        Agent as MCPAgent,
+        AgentSystem as MCPAgentSystem,
+        MCPToolMetadata,
+        AgentError,
+        TaskExecutionError,
+        create_mcp_tool_metadata,
+        mcp_tool
+    )
+    
+    # Provide MCP-enhanced classes as alternatives
+    EnhancedAgent = MCPAgent
+    EnhancedAgentSystem = MCPAgentSystem
+    
+except ImportError as e:
+    logger.warning(f"MCP enhanced classes not available: {e}")
+    # Fallback to basic classes
+    EnhancedAgent = None
+    EnhancedAgentSystem = None
+
+# Export all classes for compatibility
+__all__ = [
+    "Message", "Task", "TaskResult", "Agent", "AgentSystem",
+    "EnhancedAgent", "EnhancedAgentSystem", "MCPToolMetadata", 
+    "AgentError", "TaskExecutionError", "create_mcp_tool_metadata", "mcp_tool"
+]

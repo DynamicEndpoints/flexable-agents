@@ -1,0 +1,176 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flexible-agents-mcp"
+version = "2.0.0"
+description = "A comprehensive Microsoft 365 administration and automation platform with MCP server capabilities"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Flexible Agents Team", email = "team@flexible-agents.com"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Office/Business :: Office Suites",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "mcp>=1.0.0",
+    "pydantic>=2.10.0",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.32.0",
+    "aiohttp>=3.11.0",
+    "microsoft-graph-core>=1.0.0",
+    "msgraph-sdk>=1.13.0",
+    "azure-identity>=1.19.0",
+    "anthropic>=0.40.0",
+    "pandas>=2.2.0",
+    "structlog>=24.4.0",
+    "click>=8.1.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "black>=24.10.0",
+    "isort>=5.13.0",
+    "mypy>=1.13.0",
+    "pre-commit>=4.0.0",
+]
+docs = [
+    "sphinx>=8.1.0",
+    "sphinx-rtd-theme>=3.0.0",
+    "myst-parser>=4.0.0",
+]
+all = [
+    "flexible-agents-mcp[dev,docs]"
+]
+
+[project.urls]
+Homepage = "https://github.com/flexible-agents/flexible-agents-mcp"
+Documentation = "https://flexible-agents-mcp.readthedocs.io/"
+Repository = "https://github.com/flexible-agents/flexible-agents-mcp.git"
+"Bug Tracker" = "https://github.com/flexible-agents/flexible-agents-mcp/issues"
+
+[project.scripts]
+flexible-agents = "src.cli:main"
+fa-server = "src.server:main"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+exclude = ["tests*"]
+
+# Black configuration
+[tool.black]
+line-length = 100
+target-version = ['py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | work_files
+)/
+'''
+
+# isort configuration
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+# mypy configuration
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "azure.*",
+    "msal.*",
+    "msgraph.*",
+    "anthropic.*",
+    "pytest.*",
+]
+ignore_missing_imports = true
+
+# pytest configuration
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "azure: marks tests that require Azure credentials",
+    "m365: marks tests that require M365 credentials",
+]
+asyncio_mode = "auto"
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__init__.py",
+    "*/examples/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
