@@ -10,6 +10,8 @@ import aiohttp
 
 from src.mcp import tool
 from src.core import mcp_tool, create_mcp_tool_metadata
+# Import specialized tools
+from .specialized_tools import register_specialized_tools
 
 logger = logging.getLogger(__name__)
 
@@ -179,9 +181,11 @@ def register_m365_tools(server, config):
         description="Manage device compliance policies and monitoring",
         handler=compliance_management,
         returns="Compliance management operation result"
-    )
-    
+    )    
     logger.info("Registered M365 tools")
+    
+    # Register specialized tools
+    register_specialized_tools(server, config)
 
 
 @mcp_tool(
