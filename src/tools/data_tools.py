@@ -8,8 +8,11 @@ import json
 from datetime import datetime
 import sqlite3
 from pathlib import Path
+import time
 
 from src.core import mcp_tool
+from src.mcp.logging_system import log_request_metrics
+from src.tools.m365_tools import with_error_handling
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +57,7 @@ def register_data_tools(server, config):
     category="data",
     tags=["analysis", "statistics", "insights"]
 )
+@with_error_handling("data_analysis")
 async def data_analysis(
     data_source: str, 
     analysis_type: str = "descriptive", 
@@ -143,6 +147,7 @@ async def data_analysis(
     category="data",
     tags=["transformation", "cleaning", "preprocessing"]
 )
+@with_error_handling("data_transformation")
 async def data_transformation(
     data_source: str,
     transformations: List[Dict[str, Any]],
@@ -259,6 +264,7 @@ async def data_transformation(
     category="data",
     tags=["visualization", "charts", "graphs"]
 )
+@with_error_handling("data_visualization")
 async def data_visualization(
     data_source: str,
     chart_type: str,
@@ -337,6 +343,7 @@ async def data_visualization(
     category="data",
     tags=["database", "sql", "queries"]
 )
+@with_error_handling("database_operations")
 async def database_operations(
     operation: str,
     database_path: Optional[str] = None,

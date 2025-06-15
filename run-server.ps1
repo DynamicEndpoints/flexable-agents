@@ -85,22 +85,22 @@ Environment Variables:
 }
 
 # Build arguments
-$args = @("server.py", "--config", $Config)
+$scriptArgs = @("server.py", "--config", $Config)
 
 if ($Debug) {
-    $args += "--debug"
+    $scriptArgs += "--debug"
 }
 
 if ($CreateConfig) {
-    $args = @("server.py", "--create-config")
+    $scriptArgs = @("server.py", "--create-config")
 }
 
 if ($ValidateConfig) {
-    $args = @("server.py", "--validate-config", "--config", $Config)
+    $scriptArgs = @("server.py", "--validate-config", "--config", $Config)
 }
 
 if ($ListTools) {
-    $args = @("server.py", "--list-tools", "--config", $Config)
+    $scriptArgs = @("server.py", "--list-tools", "--config", $Config)
 }
 
 # Run the server
@@ -109,7 +109,7 @@ try {
     Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Yellow
     Write-Host ""
     
-    python @args
+    python @scriptArgs
 } catch {
     Write-Error "Failed to start server: $_"
     exit 1

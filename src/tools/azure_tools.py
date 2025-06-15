@@ -5,6 +5,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 import json
 import asyncio
+import time
 from azure.identity import DefaultAzureCredential, ClientSecretCredential
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.compute import ComputeManagementClient
@@ -14,6 +15,8 @@ import aiohttp
 
 from src.mcp import tool
 from src.core import mcp_tool
+from src.mcp.logging_system import log_request_metrics
+from src.tools.m365_tools import with_error_handling
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +115,7 @@ def register_azure_tools(server, config):
     category="azure",
     tags=["azure", "infrastructure", "resources"]
 )
+@with_error_handling("azure_resource_management")
 async def azure_resource_management(
     action: str, 
     resource_type: Optional[str] = None, 
@@ -218,6 +222,7 @@ async def azure_resource_management(
     category="azure",
     tags=["azure", "vm", "compute"]
 )
+@with_error_handling("azure_vm_management")
 async def azure_vm_management(
     action: str,
     resource_group: Optional[str] = None,
@@ -335,6 +340,7 @@ async def azure_vm_management(
     category="azure",
     tags=["azure", "network", "infrastructure"]
 )
+@with_error_handling("azure_network_management")
 async def azure_network_management(
     action: str,
     resource_group: Optional[str] = None,
@@ -398,6 +404,7 @@ async def azure_network_management(
     category="azure",
     tags=["azure", "cost", "optimization", "billing"]
 )
+@with_error_handling("cost_analysis")
 async def cost_analysis(
     scope: str = "subscription", 
     time_period: str = "month", 

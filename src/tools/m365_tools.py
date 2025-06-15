@@ -5,8 +5,10 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import json
 import asyncio
+import time
 from msal import ConfidentialClientApplication
 import aiohttp
+from src.mcp.logging_system import log_request_metrics, get_logger_manager
 
 from src.mcp import tool
 from src.core import mcp_tool, create_mcp_tool_metadata
@@ -14,6 +16,128 @@ from src.core import mcp_tool, create_mcp_tool_metadata
 from .specialized_tools import register_specialized_tools
 
 logger = logging.getLogger(__name__)
+
+
+# Enhanced error handling for M365 operations
+class M365Error(Exception):
+    """Custom exception for M365 operations."""
+    def __init__(self, message: str, error_code: str = None, operation: str = None):
+        super().__init__(message)
+        self.error_code = error_code
+        self.operation = operation
+
+
+class M365ErrorHandler:
+    """Centralized error handling for M365 operations."""
+    
+    @staticmethod
+    def handle_graph_error(e: Exception, operation: str) -> Dict[str, Any]:
+        """Handle Microsoft Graph API errors."""
+        error_message = str(e)
+        
+        # Parse common Graph API errors
+        if "Forbidden" in error_message or "403" in error_message:
+            return {
+                "status": "error",
+                "error_code": "INSUFFICIENT_PERMISSIONS",
+                "message": f"Insufficient permissions for {operation}",
+                "details": error_message,
+                "resolution": "Check that the application has the required permissions and admin consent"
+            }
+        elif "Unauthorized" in error_message or "401" in error_message:
+            return {
+                "status": "error", 
+                "error_code": "AUTHENTICATION_FAILED",
+                "message": f"Authentication failed for {operation}",
+                "details": error_message,
+                "resolution": "Verify tenant ID, client ID, and client secret are correct"
+            }
+        elif "NotFound" in error_message or "404" in error_message:
+            return {
+                "status": "error",
+                "error_code": "RESOURCE_NOT_FOUND", 
+                "message": f"Resource not found for {operation}",
+                "details": error_message,
+                "resolution": "Verify the resource exists and the ID is correct"
+            }
+        elif "BadRequest" in error_message or "400" in error_message:
+            return {
+                "status": "error",
+                "error_code": "INVALID_REQUEST",
+                "message": f"Invalid request for {operation}",
+                "details": error_message,
+                "resolution": "Check the request parameters and format"
+            }
+        elif "TooManyRequests" in error_message or "429" in error_message:
+            return {
+                "status": "error",
+                "error_code": "RATE_LIMITED",
+                "message": f"Rate limit exceeded for {operation}",
+                "details": error_message,
+                "resolution": "Wait before retrying the operation"
+            }
+        else:
+            return {
+                "status": "error",
+                "error_code": "UNKNOWN_ERROR",
+                "message": f"Unknown error in {operation}",
+                "details": error_message,
+                "resolution": "Check logs for more details and contact support if needed"
+            }
+    
+    @staticmethod
+    def handle_validation_error(field: str, value: Any, expected: str) -> Dict[str, Any]:
+        """Handle validation errors."""
+        return {
+            "status": "error",
+            "error_code": "VALIDATION_ERROR",
+            "message": f"Validation failed for field '{field}'",
+            "details": f"Expected {expected}, got {type(value).__name__}: {value}",
+            "resolution": f"Provide a valid {expected} value for '{field}'"
+        }
+
+
+def with_error_handling(operation_name: str):
+    """Decorator for adding comprehensive error handling to M365 operations."""
+    def decorator(func):
+        async def wrapper(*args, **kwargs):
+            start_time = time.time()
+            success = True
+            error_details = None
+            
+            try:
+                result = await func(*args, **kwargs)
+                
+                # Log successful operation
+                execution_time = time.time() - start_time
+                log_request_metrics(f"m365_operation:{operation_name}", execution_time, success, None)
+                
+                return result
+                
+            except Exception as e:
+                success = False
+                execution_time = time.time() - start_time
+                
+                # Handle specific error types
+                if "graph" in str(e).lower() or hasattr(e, 'response'):
+                    error_details = M365ErrorHandler.handle_graph_error(e, operation_name)
+                else:
+                    error_details = {
+                        "status": "error",
+                        "error_code": "OPERATION_FAILED",
+                        "message": f"Operation {operation_name} failed",
+                        "details": str(e),
+                        "resolution": "Check the error details and try again"
+                    }
+                
+                # Log failed operation
+                log_request_metrics(f"m365_operation:{operation_name}", execution_time, success, str(e))
+                
+                logger.error(f"M365 operation '{operation_name}' failed: {e}", exc_info=True)
+                return error_details
+                
+        return wrapper
+    return decorator
 
 
 class M365GraphClient:
@@ -194,6 +318,7 @@ def register_m365_tools(server, config):
     category="m365",
     tags=["users", "administration"]
 )
+@with_error_handling("m365_user_management")
 async def m365_user_management(
     action: str, 
     user_data: Optional[Dict[str, Any]] = None, 
@@ -308,6 +433,7 @@ async def m365_user_management(
     category="m365", 
     tags=["groups", "administration"]
 )
+@with_error_handling("m365_group_management")
 async def m365_group_management(
     action: str, 
     group_data: Optional[Dict[str, Any]] = None, 
@@ -413,6 +539,7 @@ async def m365_group_management(
     category="m365",
     tags=["licenses", "administration"]
 )
+@with_error_handling("m365_license_management")
 async def m365_license_management(
     action: str, 
     user_id: Optional[str] = None, 
@@ -495,6 +622,7 @@ async def m365_license_management(
     category="teams",
     tags=["teams", "collaboration"]
 )
+@with_error_handling("teams_management")
 async def teams_management(
     action: str,
     team_data: Optional[Dict[str, Any]] = None,
@@ -569,6 +697,7 @@ async def teams_management(
     category="sharepoint",
     tags=["sharepoint", "sites"]
 )
+@with_error_handling("sharepoint_management")
 async def sharepoint_management(
     action: str,
     site_data: Optional[Dict[str, Any]] = None,
@@ -619,6 +748,7 @@ async def sharepoint_management(
     category="exchange",
     tags=["exchange", "email"]
 )
+@with_error_handling("exchange_management")
 async def exchange_management(
     action: str,
     mailbox_data: Optional[Dict[str, Any]] = None,
@@ -660,6 +790,7 @@ async def exchange_management(
     category="security",
     tags=["security", "audit", "compliance"]
 )
+@with_error_handling("security_audit")
 async def security_audit(
     audit_type: str = "basic",
     scope: Optional[List[str]] = None
@@ -718,6 +849,7 @@ async def security_audit(
     category="intune",
     tags=["intune", "devices", "mdm"]
 )
+@with_error_handling("intune_device_management")
 async def intune_device_management(
     action: str,
     device_id: Optional[str] = None,
@@ -823,6 +955,7 @@ async def intune_device_management(
     category="intune",
     tags=["intune", "apps", "mobile"]
 )
+@with_error_handling("intune_app_management")
 async def intune_app_management(
     action: str,
     app_id: Optional[str] = None,
@@ -914,29 +1047,44 @@ async def intune_app_management(
     name="compliance_management",
     description="Manage device compliance policies and monitoring",
     category="compliance",
-    tags=["compliance", "policies", "security"]
+    tags=["compliance", "security", "intune"]
 )
+@with_error_handling("compliance_management")
 async def compliance_management(
     action: str,
     policy_id: Optional[str] = None,
     policy_data: Optional[Dict[str, Any]] = None,
-    device_id: Optional[str] = None
+    filter_criteria: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Manage device compliance policies and monitoring.
     
     Args:
-        action: Action to perform (list_policies, create_policy, get_device_compliance, get_noncompliant_devices)
+        action: Action to perform (list_policies, get_policy, create_policy, update_policy, delete_policy, assign_policy)
         policy_id: Policy ID for policy-specific operations
         policy_data: Policy data for create/update operations
-        device_id: Device ID for device compliance operations
+        filter_criteria: Filter criteria for list operations
     """
     if not _graph_client:
         return {"status": "error", "message": "Graph client not initialized"}
-    
+
     try:
         if action == "list_policies":
-            result = await _graph_client.make_request("GET", "/deviceManagement/deviceCompliancePolicies")
+            endpoint = "/deviceManagement/deviceCompliancePolicies"
+            if filter_criteria:
+                endpoint += f"?$filter={filter_criteria}"
+            
+            result = await _graph_client.make_request("GET", endpoint)
+            return {
+                "status": "success",
+                "data": result
+            }
+            
+        elif action == "get_policy":
+            if not policy_id:
+                return {"status": "error", "message": "Policy ID required for get policy operation"}
+            
+            result = await _graph_client.make_request("GET", f"/deviceManagement/deviceCompliancePolicies/{policy_id}")
             return {
                 "status": "success",
                 "data": result
@@ -952,32 +1100,47 @@ async def compliance_management(
                 "message": "Compliance policy created successfully",
                 "data": result
             }
-            
-        elif action == "get_device_compliance":
-            if not device_id:
-                return {"status": "error", "message": "Device ID required for get device compliance operation"}
-            
-            result = await _graph_client.make_request("GET", f"/deviceManagement/managedDevices/{device_id}/deviceCompliancePolicyStates")
-            return {
-                "status": "success",
-                "data": result
-            }
-            
-        elif action == "get_noncompliant_devices":
-            result = await _graph_client.make_request("GET", "/deviceManagement/managedDevices?$filter=complianceState eq 'noncompliant'")
-            return {
-                "status": "success",
-                "data": result
-            }
-            
+
         elif action == "update_policy":
             if not policy_id or not policy_data:
                 return {"status": "error", "message": "Policy ID and data required for update operation"}
-            
+
             result = await _graph_client.make_request("PATCH", f"/deviceManagement/deviceCompliancePolicies/{policy_id}", policy_data)
             return {
                 "status": "success",
-                "message": f"Policy {policy_id} updated successfully",
+                "message": f"Compliance policy {policy_id} updated successfully",
+                "data": result
+            }
+
+        elif action == "delete_policy":
+            if not policy_id:
+                return {"status": "error", "message": "Policy ID required for delete operation"}
+
+            await _graph_client.make_request("DELETE", f"/deviceManagement/deviceCompliancePolicies/{policy_id}")
+            return {
+                "status": "success",
+                "message": f"Compliance policy {policy_id} deleted successfully"
+            }
+        
+        elif action == "assign_policy":
+            # This is a simplified example. Actual assignment might be more complex.
+            if not policy_id or not policy_data or "assignments" not in policy_data:
+                 return {"status": "error", "message": "Policy ID and assignment data required for assign operation"}
+            
+            # The endpoint for assignment is typically part of the policy itself or a separate assignments endpoint
+            # For example: /deviceManagement/deviceCompliancePolicies/{policyId}/assign
+            # The body would contain the assignment details (e.g., target group)
+            # This example assumes policy_data contains the assignment payload
+            
+            # Construct the assignment payload
+            assignment_payload = {
+                "assignments": policy_data["assignments"] # e.g., [{"target": {"groupId": "some-group-id"}}]
+            }
+
+            result = await _graph_client.make_request("POST", f"/deviceManagement/deviceCompliancePolicies/{policy_id}/assign", assignment_payload)
+            return {
+                "status": "success",
+                "message": f"Compliance policy {policy_id} assigned successfully",
                 "data": result
             }
             

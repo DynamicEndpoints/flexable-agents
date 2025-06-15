@@ -6,7 +6,6 @@ import traceback
 import asyncio
 import time
 from datetime import datetime
-import json  # Added import
 from .types import ToolCallRequest, ToolCallResponse, MCPError
 from .registry import ToolRegistry
 from .logging_system import log_request_metrics, get_logger_manager
@@ -20,36 +19,32 @@ class ToolHandler:
     def __init__(self, registry: ToolRegistry):
         self.registry = registry
         self.execution_history: List[Dict[str, Any]] = []
-        
-    async def execute_tool(self, request: ToolCallRequest) -> ToolCallResponse:
+          async def execute_tool(self, request: ToolCallRequest) -> ToolCallResponse:
         """Execute a tool call request with enhanced logging."""
         start_time = time.time()
-        # success variable for the finally block of this function,
-        # indicating if execute_tool itself completed without an unhandled exception.
-        execute_tool_success_flag = True
-        execute_tool_error_message = None
+        success = True
+        error_message = None
         
-        args = request.arguments or {} # Define args early for use in _record_execution if validation fails
-
         try:
             # Get the tool handler
             handler = self.registry.get_handler(request.name)
             if not handler:
                 error_message = f"Tool '{request.name}' not found"
-                # This case will be caught by the generic Exception handler below
+                success = False
                 raise ValueError(error_message)
                 
             # Validate tool exists
             tool = self.registry.get_tool(request.name)
             if not tool:
                 error_message = f"Tool definition for '{request.name}' not found"
+                success = False
                 raise ValueError(error_message)
                 
-            # Prepare arguments (already done)
-            # args = request.arguments or {} 
+            # Prepare arguments
+            args = request.arguments or {}
             
             # Validate required parameters
-            self._validate_parameters(tool, args) # This can raise ValueError
+            self._validate_parameters(tool, args)
             
             # Execute the tool
             logger.info(f"Executing tool: {request.name} with args: {args}")
@@ -59,53 +54,39 @@ class ToolHandler:
             else:
                 result = handler(**args)
                 
-            # Determine actual tool success based on the result
-            tool_actually_succeeded = True
-            error_from_tool_str = None
-            if isinstance(result, dict) and result.get("status") == "error":
-                tool_actually_succeeded = False
-                error_from_tool_str = result.get("message") or json.dumps(result)
-
+            # Format response
             content = self._format_response_content(result)
             
+            # Record execution
             execution_time = time.time() - start_time
-            self._record_execution(request.name, args, tool_actually_succeeded, execution_time, error_from_tool_str)
+            self._record_execution(request.name, args, True, execution_time)
             
             return ToolCallResponse(
                 content=content,
-                isError=not tool_actually_succeeded
+                isError=False
             )
             
         except Exception as e:
-            execute_tool_success_flag = False
-            execute_tool_error_message = str(e)
-            logger.error(f"Error executing tool {request.name}: {execute_tool_error_message}")
+            success = False
+            error_message = str(e)
+            logger.error(f"Error executing tool {request.name}: {error_message}")
             logger.debug(traceback.format_exc())
             
-            execution_time = time.time() - start_time # Recalculate time up to the error
-            # Record failed execution (tool crashed or validation failed)
-            # args might not be fully prepared if error is in validation, so use request.arguments
-            self._record_execution(request.name, request.arguments or {}, False, execution_time, execute_tool_error_message)
-            
-            error_content_dict = {
-                "status": "error",
-                "error_code": "TOOL_EXECUTION_FAILURE",
-                "message": f"An unexpected error occurred while executing tool '{request.name}'.",
-                "details": execute_tool_error_message,
-                "resolution": "Check server logs for more details or contact support."
-            }
+            # Record failed execution
+            execution_time = time.time() - start_time
+            self._record_execution(request.name, request.arguments or {}, False, execution_time, error_message)
             
             return ToolCallResponse(
                 content=[{
-                    "type": "application/json",
-                    "json": error_content_dict
+                    "type": "text",
+                    "text": f"Error executing tool {request.name}: {error_message}"
                 }],
                 isError=True
             )
         finally:
-            # The log_request_metrics for tool_execution is now handled by _record_execution.
-            # No further logging here for f"tool_execution:{request.name}"
-            pass
+            # Log metrics to enhanced logging system
+            execution_time = time.time() - start_time
+            log_request_metrics(f"tool_execution:{request.name}", execution_time, success, error_message)
             
     def _validate_parameters(self, tool, args: Dict[str, Any]) -> None:
         """Validate tool parameters."""
@@ -154,34 +135,34 @@ class ToolHandler:
             }]
             
         if isinstance(result, dict):
-            # Check if it's a structured error response from our tools
-            if result.get("status") == "error" and "error_code" in result:
+            # If it looks like structured data, format as JSON
+            if any(key in result for key in ["status", "data", "result", "output"]):
                 return [{
-                    "type": "application/json", 
-                    "json": result 
+                    "type": "text",
+                    "text": str(result)
                 }]
-            # For other dictionaries, format as a JSON string in a text content part
-            else: # "status" removed from any() to avoid conflict, and any() is broad.
-                  # Defaulting to json.dumps for all other dicts for structured output.
-                try:
-                    return [{"type": "text", "text": json.dumps(result, indent=2)}]
-                except TypeError: # Handle non-serializable dicts
-                    return [{"type": "text", "text": str(result)}]
-
+            else:
+                # Format as readable text
+                formatted = []
+                for key, value in result.items():
+                    formatted.append(f"{key}: {value}")
+                return [{
+                    "type": "text",
+                    "text": "\n".join(formatted)
+                }]
+                
         if isinstance(result, list):
-            # Try to dump list as JSON array string if possible
-            try:
-                return [{"type": "text", "text": json.dumps(result, indent=2)}]
-            except TypeError: # Handle non-serializable items in list
-                 return [{"type": "text", "text": "\\n".join(str(item) for item in result)}]
+            return [{
+                "type": "text",
+                "text": "\n".join(str(item) for item in result)
+            }]
             
         # Default: convert to string
         return [{
             "type": "text", 
             "text": str(result)
         }]
-        
-    def _record_execution(
+          def _record_execution(
         self,
         tool_name: str,
         args: Dict[str, Any],
@@ -230,14 +211,5 @@ class ToolHandler:
             "success_rate": successful / total if total > 0 else 0,
             "average_execution_time": avg_execution_time,
             "tool_usage": tool_usage,
-            "recent_executions": [
-                {
-                    "timestamp": exec["timestamp"].isoformat(),
-                    "tool_name": exec["tool_name"],
-                    "success": exec["success"],
-                    "execution_time": exec["execution_time"],
-                    "error": exec.get("error")
-                }
-                for exec in self.execution_history[-10:]  # Last 10 executions
-            ]
+            "recent_executions": self.execution_history[-10:]  # Last 10 executions
         }

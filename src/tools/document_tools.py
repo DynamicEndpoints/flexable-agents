@@ -7,6 +7,7 @@ from pathlib import Path
 from datetime import datetime
 import json
 import re
+import time
 
 # Document processing libraries
 try:
@@ -19,6 +20,8 @@ except ImportError:
     DOCUMENT_LIBS_AVAILABLE = False
 
 from src.core import mcp_tool
+from src.mcp.logging_system import log_request_metrics
+from src.tools.m365_tools import with_error_handling
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +69,7 @@ def register_document_tools(server, config):
     category="documents",
     tags=["documents", "text", "processing"]
 )
+@with_error_handling("document_processing")
 async def document_processing(
     file_path: str, 
     operation: str = "extract_text", 
@@ -201,6 +205,7 @@ async def document_processing(
     category="documents",
     tags=["conversion", "formats", "transformation"]
 )
+@with_error_handling("document_conversion")
 async def document_conversion(
     input_file: str,
     output_file: str,
@@ -279,6 +284,7 @@ async def document_conversion(
     category="documents",
     tags=["analysis", "content", "structure"]
 )
+@with_error_handling("document_analysis")
 async def document_analysis(
     file_path: str,
     analysis_type: str = "content",
@@ -389,6 +395,7 @@ async def document_analysis(
     category="documents",
     tags=["ocr", "images", "text extraction"]
 )
+@with_error_handling("ocr_processing")
 async def ocr_processing(
     image_path: str,
     options: Optional[Dict[str, Any]] = None

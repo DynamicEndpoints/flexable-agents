@@ -12,6 +12,13 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from src.mcp import ConfigManager
 from src.mcp.config import create_sample_config
+from src.mcp.logging_system import setup_logging  # Import setup_logging
+
+# Initialize logging with default settings for CLI operations
+# This ensures that modules like ConfigManager use the enhanced logging
+# system even when invoked via CLI commands that don't start the full server.
+# The main server.py will call setup_enhanced_logging again with specific config.
+setup_logging()
 
 
 @click.group()

@@ -4,8 +4,11 @@ import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import json
+import time
 
 from src.core import mcp_tool
+from src.mcp.logging_system import log_request_metrics
+from src.tools.m365_tools import with_error_handling
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +57,7 @@ def register_specialized_tools(server, config):
     category="teams",
     tags=["teams", "policies", "apps", "meetings"]
 )
+@with_error_handling("teams_advanced_management")
 async def teams_advanced_management(
     action: str,
     team_id: Optional[str] = None,
@@ -159,6 +163,7 @@ async def teams_advanced_management(
     category="sharepoint",
     tags=["sharepoint", "powerplatform", "development"]
 )
+@with_error_handling("sharepoint_development")
 async def sharepoint_development(
     action: str,
     site_data: Optional[Dict[str, Any]] = None,
@@ -265,6 +270,7 @@ async def sharepoint_development(
     category="exchange",
     tags=["exchange", "compliance", "security", "mailflow"]
 )
+@with_error_handling("exchange_advanced_management")
 async def exchange_advanced_management(
     action: str,
     mailbox_data: Optional[Dict[str, Any]] = None,
@@ -362,6 +368,7 @@ async def exchange_advanced_management(
     category="automation",
     tags=["automation", "workflows", "bulk"]
 )
+@with_error_handling("workflow_automation")
 async def workflow_automation(
     workflow_type: str,
     workflow_data: Dict[str, Any]

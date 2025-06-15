@@ -14,9 +14,10 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from src.mcp import MCPServer, ConfigManager
 from src.mcp.config import create_sample_config
+from src.mcp.logging_system import setup_logging, get_logger_manager, log_request_metrics
 from src.tools import register_all_tools
 
-# Configure logging
+# Basic logging configuration (will be enhanced by logging_system)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -28,22 +29,34 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def setup_logging(config: ConfigManager) -> None:
-    """Setup logging configuration."""
-    log_level = getattr(logging, config.server.log_level.upper())
+def setup_enhanced_logging(config: ConfigManager) -> None:
+    """Setup enhanced logging configuration with monitoring."""
+    # Create logging configuration
+    logging_config = {
+        "log_level": config.server.log_level,
+        "log_format": "detailed" if config.server.debug else "simple",
+        "log_file": "logs/mcp_server.log",
+        "max_log_files": 10,
+        "max_log_size_mb": 50
+    }
     
-    # Update root logger level
-    logging.getLogger().setLevel(log_level)
+    # Initialize enhanced logging system
+    logger_manager = setup_logging(logging_config)
     
     # Set specific logger levels
     if config.server.debug:
         logging.getLogger("src.mcp").setLevel(logging.DEBUG)
         logging.getLogger("src.tools").setLevel(logging.DEBUG)
+        logging.getLogger("src.core").setLevel(logging.DEBUG)
     else:
         # Reduce noise from external libraries
         logging.getLogger("azure").setLevel(logging.WARNING)
         logging.getLogger("msal").setLevel(logging.WARNING)
         logging.getLogger("urllib3").setLevel(logging.WARNING)
+        logging.getLogger("aiohttp").setLevel(logging.WARNING)
+    
+    logger.info("Enhanced logging system initialized")
+    return logger_manager
 
 
 async def main() -> None:
@@ -70,10 +83,16 @@ async def main() -> None:
         action="store_true",
         help="List all available tools and exit"
     )
+
     parser.add_argument(
         "--debug",
         action="store_true",
         help="Enable debug mode"
+    )
+    parser.add_argument(
+        "--health-check",
+        action="store_true", 
+        help="Check server health and exit"
     )
     parser.add_argument(
         "--version",
@@ -103,10 +122,14 @@ async def main() -> None:
     # Override debug setting if specified
     if args.debug:
         config.server.debug = True
-        config.server.log_level = "DEBUG"
-        
-    # Setup logging
-    setup_logging(config)
+        config.server.log_level = "DEBUG"    # Setup enhanced logging
+    logger_manager = setup_enhanced_logging(config)
+    
+    # Handle health check
+    if hasattr(args, 'health_check') and args.health_check:
+        health = logger_manager.get_health_status() if logger_manager else {"status": "unknown"}
+        print(json.dumps(health, indent=2))
+        return
     
     # Handle validate config
     if args.validate_config:

@@ -7,8 +7,11 @@ from datetime import datetime, timedelta
 import json
 import uuid
 from pathlib import Path
+import time
 
 from src.core import mcp_tool
+from src.mcp.logging_system import log_request_metrics
+from src.tools.m365_tools import with_error_handling
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +63,7 @@ def register_workflow_tools(server, config):
     category="automation",
     tags=["workflows", "automation", "orchestration"]
 )
+@with_error_handling("workflow_automation")
 async def workflow_automation(
     workflow_type: str, 
     workflow_data: Optional[Dict[str, Any]] = None, 
@@ -131,6 +135,7 @@ async def workflow_automation(
     category="automation",
     tags=["templates", "workflows", "management"]
 )
+@with_error_handling("workflow_template_management")
 async def workflow_template_management(
     action: str,
     template_id: Optional[str] = None,
@@ -217,6 +222,7 @@ async def workflow_template_management(
     category="automation",
     tags=["monitoring", "tracking", "workflows"]
 )
+@with_error_handling("workflow_monitoring")
 async def workflow_monitoring(
     action: str,
     workflow_id: Optional[str] = None,
@@ -308,6 +314,7 @@ async def workflow_monitoring(
     category="automation",
     tags=["scheduling", "recurring", "automation"]
 )
+@with_error_handling("workflow_scheduling")
 async def workflow_scheduling(
     action: str,
     schedule_data: Optional[Dict[str, Any]] = None,

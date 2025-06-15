@@ -3,12 +3,12 @@
 import os
 import json
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from dotenv import load_dotenv
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # Reverted to standard logger
 
 
 @dataclass

@@ -6,7 +6,7 @@ from functools import wraps
 import inspect
 from .types import MCPTool, ToolParameter
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # Reverted to standard logger
 
 
 class ToolRegistry:
