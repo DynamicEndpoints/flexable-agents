@@ -2,7 +2,7 @@
 
 import logging
 import inspect
-from typing import Dict, Any, List, Optional, Callable, Type
+from typing import Dict, Any, List, Optional, Callable, Type, Union
 from functools import wraps
 
 from .base import Agent, Task, TaskResult
